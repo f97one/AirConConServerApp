@@ -1,0 +1,10 @@
+development:
+  dialect: sqlite3
+  datasource: file:airconcon.sqlite?_mode=rw&_journal=WAL&_auto_vacuu=incremental
+  dir: migrations/sqlite3
+
+production:
+  dialect: sqlite3
+  datasource: file:airconcon.sqlite?_mode=rw&_journal=WAL&_auto_vacuu=incremental
+  dir: migrations/sqlite3
+  table: migrations

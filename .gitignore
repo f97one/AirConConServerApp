@@ -23,3 +23,7 @@ Thumbs.db
 
 .idea/
 .vscode/
+
+airconcon.sqlite
+airconcon.sqlite-shm
+airconcon.sqlite-wal
