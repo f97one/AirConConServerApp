@@ -3,7 +3,7 @@
 create table app_user (
     user_id integer primary key autoincrement,
     username text not null unique,
-    password text not null unique,
+    password text not null default '',
     digest_id text default ''
 );
 create table jwt_token (
