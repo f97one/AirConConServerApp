@@ -15,7 +15,7 @@
 
 # Dependency directories (remove the comment below to include it)
 vendor/*
-!vendor/modules.txt
+#!vendor/modules.txt
 
 Thumbs.db
 *.bak
