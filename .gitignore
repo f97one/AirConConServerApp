@@ -29,5 +29,4 @@ airconcon.sqlite-shm
 airconcon.sqlite-wal
 
 # JWT署名キー
-airconcon_jwt_rsa
-airconcon_jwt_rsa.pub
+airconcon_jwt_rsa*
