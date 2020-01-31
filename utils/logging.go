@@ -31,7 +31,7 @@ func GetLogger() *logrus.Logger {
 				LocalTime: true,
 				Compress:  true,
 			})
-			logger.SetLevel(logrus.WarnLevel)
+			logger.SetLevel(logrus.InfoLevel)
 		} else {
 			logger.SetOutput(os.Stdout)
 			logger.SetLevel(logrus.TraceLevel)
