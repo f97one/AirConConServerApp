@@ -7,4 +7,6 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mattn/go-sqlite3 v2.0.2+incompatible
 	github.com/rubenv/sql-migrate v0.0.0-20200119084958-8794cecc920c
+	github.com/sirupsen/logrus v1.4.2
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
