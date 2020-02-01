@@ -5,11 +5,11 @@ type AppUser struct {
 	// ユーザーID
 	UserId int32 `db:"user_id"`
 	// ユーザー名
-	Username string `db:"username"`
+	Username string `db:"username" json:"username"`
 	// パスワード
-	Password string `db:"password"`
+	Password string `db:"password" json:"password"`
 	// ダイジェスト値
-	DigestId *string `db:"digest_id"`
+	NeedPwChange bool `db:"need_pw_change"`
 }
 
 // jwt_token の構造体
