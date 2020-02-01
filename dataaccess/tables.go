@@ -3,7 +3,7 @@ package dataaccess
 // app_user の構造体
 type AppUser struct {
 	// ユーザーID
-	UserId int32 `db:"user_id"`
+	UserId int `db:"user_id"`
 	// ユーザー名
 	Username string `db:"username" json:"username"`
 	// パスワード
@@ -15,7 +15,7 @@ type AppUser struct {
 // jwt_token の構造体
 type JwtToken struct {
 	// ユーザーID
-	UserId int32 `db:"user_id"`
+	UserId int `db:"user_id"`
 	// 生成済みJWTトークン
 	GeneratedToken string `db:"generated_token"`
 	// トークンの有効期限
