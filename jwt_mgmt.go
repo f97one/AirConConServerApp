@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
@@ -35,6 +36,14 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	}
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
+	// UUIDを生成して有効期限ごとに変えさせる
+	u, err := uuid.NewRandom()
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		return "", now
+	}
+	claims["id"] = u.String()
 	claims["name"] = username
 	claims["exp"] = period.Unix()
 	claims["iat"] = now.Unix()
