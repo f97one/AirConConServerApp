@@ -34,3 +34,28 @@ func main() {
 		logger.Fatalln(err)
 	}
 }
+
+// JWTトークンを返却するレスポンスのJSON
+type tokenResp struct {
+	Token string `json:"token"`
+}
+
+// ユーザー追加に成功したユーザーを返却するレスポンスのJSON
+type usernameResp struct {
+	Username string `json:"username"`
+}
+
+// なんらかのメッセージを返却するレスポンスのJSON
+type msgResp struct {
+	Msg string `json:"msg"`
+}
+
+// コントロールスケジュールを返却するレスポンスのJSON(1要素分)
+//type scheduleResp struct {
+//	ScheduleId int `json:"schedule_id"`
+//	Name string `json:"name"`
+//	OnOff string `json:"on_off"`
+//	Weekday []int `json:"weekday"`
+//	Time time.Time `json:"time"`
+//	ScriptId int `json:"script_id"`
+//}
