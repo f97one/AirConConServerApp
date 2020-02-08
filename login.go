@@ -15,7 +15,11 @@ import (
 )
 
 func respondError(w *http.ResponseWriter, err error, sc int) {
-	http.Error(*w, err.Error(), sc)
+	msg := ""
+	if err != nil {
+		msg = err.Error()
+	}
+	http.Error(*w, msg, sc)
 }
 
 // ログインする。
@@ -124,11 +128,10 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // ログアウトさせる
 func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	claims, done, err := extractClaims(w, r)
-	if done {
+	username, err := getUsernameFromClaims(w, r)
+	if err != nil {
 		return
 	}
-	username := claims["name"].(string)
 
 	logger.Tracef("ユーザー %s を検索中", username)
 	appUser, err := dataaccess.LoadByUsername(username)
@@ -143,6 +146,15 @@ func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 	}
+}
+
+func getUsernameFromClaims(w http.ResponseWriter, r *http.Request) (string, error) {
+	claims, done, err := extractClaims(w, r)
+	if done {
+		return "", nil
+	}
+	username := claims["name"].(string)
+	return username, err
 }
 
 func extractClaims(w http.ResponseWriter, r *http.Request) (jwt.MapClaims, bool, error) {
