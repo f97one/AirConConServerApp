@@ -124,31 +124,10 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // ログアウトさせる
 func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// JWTトークンの検証とClaimsをとってくる
-	token, err := extractJwt(w, r)
-	if err != nil {
-		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+	claims, done, err := extractClaims(w, r)
+	if done {
 		return
 	}
-	if !token.Valid {
-		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
-		return
-	}
-
-	verifyKey, err := extractPublicKey(w)
-	if err != nil {
-		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
-		return
-	}
-
-	logger.Traceln("JWTからUsernameを抽出中")
-	claims := jwt.MapClaims{}
-	_, err = jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (interface{}, error) {
-		return verifyKey, nil
-	})
 	username := claims["name"].(string)
 
 	logger.Tracef("ユーザー %s を検索中", username)
@@ -164,4 +143,33 @@ func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 	}
+}
+
+func extractClaims(w http.ResponseWriter, r *http.Request) (jwt.MapClaims, bool, error) {
+	// JWTトークンの検証とClaimsをとってくる
+	token, err := extractJwt(w, r)
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		return nil, true, err
+	}
+	if !token.Valid {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		return nil, true, nil
+	}
+
+	verifyKey, err := extractPublicKey(w)
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		return nil, true, err
+	}
+
+	logger.Traceln("JWTからUsernameを抽出中")
+	claims := jwt.MapClaims{}
+	_, err = jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	return claims, false, err
 }
