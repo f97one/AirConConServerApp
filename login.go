@@ -121,11 +121,6 @@ func respondUnauthorized(w http.ResponseWriter) {
 	return
 }
 
-// ユーザーを追加する。
-func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
-}
-
 // ログアウトさせる
 func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	username, err := getUsernameFromClaims(w, r)
