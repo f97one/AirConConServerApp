@@ -1,5 +1,7 @@
 package dataaccess
 
+import "time"
+
 // app_user の構造体
 type AppUser struct {
 	// ユーザーID
@@ -22,4 +24,28 @@ type JwtToken struct {
 	GeneratedToken string `db:"generated_token"`
 	// トークンの有効期限
 	ExpiresAt string `db:"expires_at"`
+}
+
+// schedule の構造体
+type Schedule struct {
+	// スケジュール番号
+	ScheduleId string `db:"schedule_id"`
+	// スケジュール名
+	Name string `db:"name"`
+	// オンオフ種別
+	OnOff bool `db:"on_off"`
+	// 実行時間
+	ExecuteTime string `db:"execute_time"`
+	// 実行スクリプト番号
+	ScriptId string `db:"script_id"`
+	// 実行日
+	ExecDay []Timing
+}
+
+// timing の構造体
+type Timing struct {
+	// スケジュール番号
+	ScheduleId string `db:"schedule_id"`
+	// 実行日
+	WeekdayId time.Weekday `db:"weekday_id"`
 }
