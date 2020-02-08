@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -81,6 +82,25 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 }
 
 func extractJwt(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
+	verifyKey, err := extractPublicKey(w)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Traceln("JWTの署名を検証中")
+	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
+		_, err := token.Method.(*jwt.SigningMethodRSA)
+		if !err {
+			logger.Warnf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		} else {
+			return verifyKey, nil
+		}
+	})
+	return token, err
+}
+
+func extractPublicKey(w http.ResponseWriter) (*rsa.PublicKey, error) {
 	logger.Traceln("公開鍵を読み込み中")
 	verifyBytes, err := ioutil.ReadFile("./" + pkcs8PublicKeyFile)
 	if err != nil {
@@ -96,16 +116,5 @@ func extractJwt(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 		respondErrorWithLog(&w, err, http.StatusInternalServerError)
 		return nil, err
 	}
-
-	logger.Traceln("JWTの署名を検証中")
-	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
-		_, err := token.Method.(*jwt.SigningMethodRSA)
-		if !err {
-			logger.Warnf("Unexpected signing method: %v", token.Header["alg"])
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		} else {
-			return verifyKey, nil
-		}
-	})
-	return token, err
+	return verifyKey, nil
 }
