@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
+	"github.com/f97one/AirConCon/dataaccess"
 	"github.com/f97one/AirConCon/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -11,6 +13,13 @@ import (
 
 var conf *utils.AppConfig
 var logger *logrus.Logger
+
+const currentUser = "current_user_token"
+
+func init() {
+	gob.Register(dataaccess.AppUser{})
+	gob.Register(dataaccess.JwtToken{})
+}
 
 func main() {
 	flag.Parse()

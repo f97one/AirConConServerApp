@@ -9,6 +9,7 @@ import (
 
 func configureRouting(mux *httprouter.Router) {
 	mux.POST("/login", withLog(login))
+	mux.POST("/logout", requireJwtHandler(withLog(logout)))
 }
 
 // withLog sends log to logger before calling Handle
