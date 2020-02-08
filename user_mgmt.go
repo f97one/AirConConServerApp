@@ -185,3 +185,30 @@ func changePassword(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 	respondJwtToken(w, appUser)
 }
+
+// ログアウトして自身を削除する。
+func unsubscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	username, err := getUsernameFromClaims(w, r)
+	if err != nil {
+		return
+	}
+
+	logger.Tracef("ユーザー %s を検索中", username)
+	appUser, err := dataaccess.LoadByUsername(username)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusNotFound)
+		return
+	}
+
+	logger.Tracef("ユーザー %s を削除中", username)
+	err = dataaccess.DeleteById(appUser.UserId)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	// ボディなし
+}

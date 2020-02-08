@@ -18,6 +18,8 @@ func configureRouting(mux *httprouter.Router) {
 	mux.PUT("/adduser", requireJwtHandler(withLog(subscribe)))
 	// パスワード更新
 	mux.POST("/passwd", requireJwtHandler(withLog(changePassword)))
+	// ユーザー削除
+	mux.DELETE("/unsubscribe", requireJwtHandler(withLog(unsubscribe)))
 }
 
 // withLog sends log to logger before calling Handle

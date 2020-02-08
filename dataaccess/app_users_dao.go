@@ -92,3 +92,38 @@ func UpdatePassword(pw string, userId int) error {
 	}
 	return nil
 }
+
+func DeleteById(userId int) error {
+	logger := utils.GetLogger()
+
+	tx, err := db.Beginx()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	bindValues := map[string]interface{}{
+		"userId": userId,
+	}
+
+	// jwt_token -> app_user の順に消す
+	jwtTokenStmt := "delete from jwt_token where user_id = :userId"
+	_, err = tx.NamedExec(jwtTokenStmt, bindValues)
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	appUserStmt := "delete from app_user where user_id = :userId"
+	_, err = tx.NamedExec(appUserStmt, bindValues)
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	return nil
+}
