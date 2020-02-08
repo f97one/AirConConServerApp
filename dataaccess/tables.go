@@ -10,6 +10,8 @@ type AppUser struct {
 	Password string `db:"password" json:"password"`
 	// ダイジェスト値
 	NeedPwChange bool `db:"need_pw_change"`
+	// 管理者フラグ
+	AdminFlag bool `db:"admin_flag"`
 }
 
 // jwt_token の構造体

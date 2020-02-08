@@ -6,7 +6,7 @@ import (
 )
 
 func LoadByUsername(username string) (AppUser, error) {
-	sqlStmt := "select user_id, username, password, need_pw_change from app_user where username = $1"
+	sqlStmt := "select user_id, username, password, need_pw_change, admin_flag from app_user where username = $1"
 	au := AppUser{}
 	err := db.QueryRowx(sqlStmt, username).StructScan(&au)
 	if err != nil && err != sql.ErrNoRows {
@@ -17,7 +17,7 @@ func LoadByUsername(username string) (AppUser, error) {
 }
 
 func findById(userId int) (AppUser, error) {
-	sqlStmt := "select user_id, username, password, need_pw_change from app_user where user_id = $1"
+	sqlStmt := "select user_id, username, password, need_pw_change, admin_flag from app_user where user_id = $1"
 	au := AppUser{}
 	err := db.QueryRowx(sqlStmt, userId).StructScan(&au)
 	if err != nil && err != sql.ErrNoRows {
