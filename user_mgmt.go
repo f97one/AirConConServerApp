@@ -134,3 +134,54 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 	}
 }
+
+// パスワードを変更する。
+func changePassword(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	username, err := getUsernameFromClaims(w, r)
+	if err != nil {
+		return
+	}
+
+	logger.Tracef("ユーザー %s を検索中", username)
+	appUser, err := dataaccess.LoadByUsername(username)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	defer r.Body.Close()
+
+	logger.Traceln("リクエストボディを読み取り中")
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
+		return
+	}
+
+	logger.Traceln("ユーザーデータをアンマーシャリング中")
+	var reqUser *dataaccess.AppUser
+	err = json.Unmarshal(body, &reqUser)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
+		return
+	}
+
+	// ユーザーなしの場合はユーザーを追加する
+	logger.Tracef("ユーザー %s のパスワードを変更中", username)
+	encodedPw, err := bcrypt.GenerateFromPassword([]byte(reqUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	err = dataaccess.UpdatePassword(fmt.Sprintf("%s", encodedPw), appUser.UserId)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	respondJwtToken(w, appUser)
+}

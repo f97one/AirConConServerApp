@@ -8,10 +8,16 @@ import (
 )
 
 func configureRouting(mux *httprouter.Router) {
+	// ログイン
 	mux.POST("/login", withLog(login))
+	// ログアウト
 	mux.POST("/logout", requireJwtHandler(withLog(logout)))
+	// JWT更新
 	mux.POST("/auth", requireJwtHandler(withLog(auth)))
+	// ユーザー追加
 	mux.PUT("/adduser", requireJwtHandler(withLog(subscribe)))
+	// パスワード更新
+	mux.POST("/passwd", requireJwtHandler(withLog(changePassword)))
 }
 
 // withLog sends log to logger before calling Handle

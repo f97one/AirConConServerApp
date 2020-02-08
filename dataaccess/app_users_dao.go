@@ -60,3 +60,35 @@ func CreateUser(user AppUser) error {
 	}
 	return nil
 }
+
+func UpdatePassword(pw string, userId int) error {
+	sqlStmt := "update app_user set password = :password where user_id = :userId"
+	logger := utils.GetLogger()
+
+	tx, err := db.Beginx()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	bindValues := map[string]interface{}{
+		"userId":   userId,
+		"password": pw,
+	}
+
+	_, err = tx.NamedExec(sqlStmt, bindValues)
+	if err != nil {
+		logger.Errorln(err)
+		err = tx.Rollback()
+		if err != nil {
+			logger.Errorln(err)
+		}
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	return nil
+}
