@@ -1,6 +1,7 @@
 package dataaccess
 
 import (
+	"errors"
 	"github.com/f97one/AirConCon/utils"
 	"time"
 )
@@ -27,7 +28,6 @@ func PutToken(userId int, token string, expiration time.Time) error {
 	var mergeSql string
 	if err != nil {
 		// ROWが空エラー = レコードなしなのでINSERT
-
 		mergeSql = "insert into jwt_token (user_id, generated_token, expires_at) values (:userId, :token, :expiresAt)"
 	} else {
 		// エラーなし = レコードありなのでUPDATE
@@ -46,6 +46,36 @@ func PutToken(userId int, token string, expiration time.Time) error {
 	if err != nil {
 		logger.Errorln(err)
 		return err
+	}
+	return nil
+}
+
+func RemoveToken(userId int) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	sqlStmt := "delete from jwt_token where user_id = :userId"
+
+	bind := map[string]interface{}{
+		"userId": userId,
+	}
+
+	result, err := tx.NamedExec(sqlStmt, bind)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errors.New("no rows affected")
 	}
 	return nil
 }
