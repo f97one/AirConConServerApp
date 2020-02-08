@@ -28,14 +28,14 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	signBytes, err := ioutil.ReadFile("./" + privateKeyFile)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
 	logger.Traceln("秘密鍵の抽出中")
 	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
 
@@ -46,7 +46,7 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	u, err := uuid.NewRandom()
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
 	claims["id"] = u.String()
@@ -58,7 +58,7 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
 	return tokenString, period
@@ -77,7 +77,7 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 			verifyKey, err := extractPublicKey(w)
 			if err != nil {
 				logger.Errorln(err)
-				respondErrorWithLog(&w, err, http.StatusBadRequest)
+				respondError(&w, err, http.StatusBadRequest)
 				return
 			}
 
@@ -95,13 +95,13 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 				b, err := json.Marshal(&msgResp{Msg: msg})
 				if err != nil {
 					logger.Errorln(err)
-					respondErrorWithLog(&w, err, http.StatusBadRequest)
+					respondError(&w, err, http.StatusBadRequest)
 					return
 				}
 				_, err = w.Write(b)
 				if err != nil {
 					logger.Errorln(err)
-					respondErrorWithLog(&w, err, http.StatusBadRequest)
+					respondError(&w, err, http.StatusBadRequest)
 					return
 				}
 				return
@@ -141,7 +141,7 @@ func extractPublicKey(w http.ResponseWriter) (*rsa.PublicKey, error) {
 	verifyBytes, err := ioutil.ReadFile("./" + pkcs8PublicKeyFile)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return nil, err
 	}
 
@@ -149,7 +149,7 @@ func extractPublicKey(w http.ResponseWriter) (*rsa.PublicKey, error) {
 	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return nil, err
 	}
 	return verifyKey, nil

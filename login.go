@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func respondErrorWithLog(w *http.ResponseWriter, err error, sc int) {
+func respondError(w *http.ResponseWriter, err error, sc int) {
 	http.Error(*w, err.Error(), sc)
 }
 
@@ -26,7 +26,7 @@ func login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		respondError(&w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -35,14 +35,14 @@ func login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	err = json.Unmarshal(body, &reqUser)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		respondError(&w, err, http.StatusBadRequest)
 		return
 	}
 
 	logger.Traceln("ユーザー名のバリデート中")
 	if strings.TrimSpace(reqUser.Username) == "" {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, errors.New("username must not be empty"), http.StatusBadRequest)
+		respondError(&w, errors.New("username must not be empty"), http.StatusBadRequest)
 		return
 	}
 
@@ -55,7 +55,7 @@ func login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return
 		} else {
 			logger.Errorln(err)
-			respondErrorWithLog(&w, err, http.StatusInternalServerError)
+			respondError(&w, err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -81,20 +81,20 @@ func respondJwtToken(w http.ResponseWriter, au dataaccess.AppUser) (string, time
 	err := dataaccess.PutToken(au.UserId, jwtToken, expirationDate)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", time.Now()
 	}
 
 	b, err := json.Marshal(&tokenResp{Token: jwtToken})
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return "", time.Now()
 	}
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 	}
 
 	return jwtToken, expirationDate
@@ -106,13 +106,13 @@ func respondUnauthorized(w http.ResponseWriter) {
 	b, err := json.Marshal(&msgResp{Msg: "Invalid username or password"})
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 	}
 	return
 }
@@ -134,7 +134,7 @@ func logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	appUser, err := dataaccess.LoadByUsername(username)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -150,19 +150,19 @@ func extractClaims(w http.ResponseWriter, r *http.Request) (jwt.MapClaims, bool,
 	token, err := extractJwt(w, r)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return nil, true, err
 	}
 	if !token.Valid {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		respondError(&w, err, http.StatusBadRequest)
 		return nil, true, nil
 	}
 
 	verifyKey, err := extractPublicKey(w)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusBadRequest)
+		respondError(&w, err, http.StatusBadRequest)
 		return nil, true, err
 	}
 
@@ -187,7 +187,7 @@ func auth(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	appUser, err := dataaccess.LoadByUsername(username)
 	if err != nil {
 		logger.Errorln(err)
-		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
 
