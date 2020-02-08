@@ -26,3 +26,37 @@ func findById(userId int) (AppUser, error) {
 
 	return au, err
 }
+
+func CreateUser(user AppUser) error {
+	sqlStmt := "insert into app_user (username, password, need_pw_change, admin_flag) values (:username, :password, :needPwChange, :adminFlag)"
+	logger := utils.GetLogger()
+
+	tx, err := db.Beginx()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	bindValues := map[string]interface{}{
+		"username":     user.Username,
+		"password":     user.Password,
+		"needPwChange": boolToInt(user.NeedPwChange),
+		"adminFlag":    boolToInt(user.AdminFlag),
+	}
+
+	_, err = tx.NamedExec(sqlStmt, bindValues)
+	if err != nil {
+		logger.Errorln(err)
+		err = tx.Rollback()
+		if err != nil {
+			logger.Errorln(err)
+		}
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	return nil
+}

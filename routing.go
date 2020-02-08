@@ -11,6 +11,7 @@ func configureRouting(mux *httprouter.Router) {
 	mux.POST("/login", withLog(login))
 	mux.POST("/logout", requireJwtHandler(withLog(logout)))
 	mux.POST("/auth", requireJwtHandler(withLog(auth)))
+	mux.PUT("/adduser", requireJwtHandler(withLog(subscribe)))
 }
 
 // withLog sends log to logger before calling Handle
