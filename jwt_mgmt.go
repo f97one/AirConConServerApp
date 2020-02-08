@@ -22,18 +22,22 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	now := time.Now()
 	period := now.Add(validPeriod)
 
+	logger.Traceln("秘密鍵を読み取り中")
 	signBytes, err := ioutil.ReadFile("./" + privateKeyFile)
 	if err != nil {
 		logger.Errorln(err)
 		respondErrorWithLog(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
+	logger.Traceln("秘密鍵の抽出中")
 	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
 		logger.Errorln(err)
 		respondErrorWithLog(&w, err, http.StatusInternalServerError)
 		return "", now
 	}
+
+	logger.Traceln("JWT Claims 生成中")
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 	// UUIDを生成して有効期限ごとに変えさせる
@@ -48,6 +52,7 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 	claims["exp"] = period.Unix()
 	claims["iat"] = now.Unix()
 
+	logger.Traceln("JWTを署名中")
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
 		logger.Errorln(err)
@@ -59,32 +64,48 @@ func genJwtToken(w http.ResponseWriter, username string) (string, time.Time) {
 
 func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		verifyBytes, err := ioutil.ReadFile("./" + pkcs8PublicKeyFile)
+		token, err := extractJwt(w, r)
 		if err != nil {
-			logger.Errorln(err)
-			respondErrorWithLog(&w, err, http.StatusInternalServerError)
 			return
 		}
-		verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
-		if err != nil {
-			logger.Errorln(err)
-			respondErrorWithLog(&w, err, http.StatusInternalServerError)
-			return
-		}
-		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
-			_, err := token.Method.(*jwt.SigningMethodRSA)
-			if !err {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			} else {
-				return verifyKey, nil
-			}
-		})
-		if err == nil && token.Valid {
+		if token.Valid {
+			logger.Traceln("トークンに問題なし")
 			handle(w, r, ps)
 		} else {
+			logger.Warnln("不正トークンを検知")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 	}
 
+}
+
+func extractJwt(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
+	logger.Traceln("公開鍵を読み込み中")
+	verifyBytes, err := ioutil.ReadFile("./" + pkcs8PublicKeyFile)
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		return nil, err
+	}
+
+	logger.Traceln("公開鍵を抽出中")
+	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		return nil, err
+	}
+
+	logger.Traceln("JWTの署名を検証中")
+	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
+		_, err := token.Method.(*jwt.SigningMethodRSA)
+		if !err {
+			logger.Warnf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		} else {
+			return verifyKey, nil
+		}
+	})
+	return token, err
 }
