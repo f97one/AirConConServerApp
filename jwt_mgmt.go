@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -71,6 +72,41 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 		}
 		if token.Valid {
 			logger.Traceln("トークンに問題なし")
+
+			// 有効期限切れかどうかを確認する
+			verifyKey, err := extractPublicKey(w)
+			if err != nil {
+				logger.Errorln(err)
+				respondErrorWithLog(&w, err, http.StatusBadRequest)
+				return
+			}
+
+			claims := jwt.MapClaims{}
+			_, err = jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (interface{}, error) {
+				return verifyKey, nil
+			})
+			// claimsに格納したUnixタイムスタンプがなぜかfloat64扱いになっているのでキャストで対応
+			exp := claims["exp"].(float64)
+			expiresAt := time.Unix(int64(exp), 0)
+			if expiresAt.Before(time.Now()) {
+				msg := "Given token has expired."
+				logger.Errorln(msg)
+				w.WriteHeader(http.StatusUnauthorized)
+				b, err := json.Marshal(&msgResp{Msg: msg})
+				if err != nil {
+					logger.Errorln(err)
+					respondErrorWithLog(&w, err, http.StatusBadRequest)
+					return
+				}
+				_, err = w.Write(b)
+				if err != nil {
+					logger.Errorln(err)
+					respondErrorWithLog(&w, err, http.StatusBadRequest)
+					return
+				}
+				return
+			}
+
 			handle(w, r, ps)
 		} else {
 			logger.Warnln("不正トークンを検知")
