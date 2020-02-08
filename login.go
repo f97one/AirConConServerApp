@@ -173,3 +173,24 @@ func extractClaims(w http.ResponseWriter, r *http.Request) (jwt.MapClaims, bool,
 	})
 	return claims, false, err
 }
+
+// ユーザーのJWTを更新する
+func auth(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	claims, done, _ := extractClaims(w, r)
+	if done {
+		return
+	}
+
+	username := claims["name"].(string)
+
+	logger.Tracef("ユーザー %s を検索中", username)
+	appUser, err := dataaccess.LoadByUsername(username)
+	if err != nil {
+		logger.Errorln(err)
+		respondErrorWithLog(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.Traceln("JWTを生成中")
+	respondJwtToken(w, appUser)
+}
