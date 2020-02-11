@@ -40,8 +40,8 @@ func CreateUser(user AppUser) error {
 	bindValues := map[string]interface{}{
 		"username":     user.Username,
 		"password":     user.Password,
-		"needPwChange": boolToInt(user.NeedPwChange),
-		"adminFlag":    boolToInt(user.AdminFlag),
+		"needPwChange": utils.BoolToInt(user.NeedPwChange),
+		"adminFlag":    utils.BoolToInt(user.AdminFlag),
 	}
 
 	_, err = tx.NamedExec(sqlStmt, bindValues)

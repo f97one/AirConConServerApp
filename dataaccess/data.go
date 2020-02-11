@@ -28,13 +28,3 @@ func initDatabase() {
 	}
 	db = database
 }
-
-// trueを1に、falseを0に変換する。
-func boolToInt(b bool) int {
-	ret := 0
-	if b {
-		ret = 1
-	}
-
-	return ret
-}
