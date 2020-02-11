@@ -49,3 +49,11 @@ type Timing struct {
 	// 実行日
 	WeekdayId time.Weekday `db:"weekday_id"`
 }
+
+// scripts の構造体
+type Scripts struct {
+	ScriptId   string  `db:"script_id"`
+	Gpio       int     `db:"gpio"`
+	ScriptName string  `db:"script_name"`
+	Freq       float64 `db:"freq"`
+}
