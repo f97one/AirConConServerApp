@@ -20,6 +20,11 @@ func configureRouting(mux *httprouter.Router) {
 	mux.POST("/passwd", requireJwtHandler(withLog(changePassword)))
 	// ユーザー削除
 	mux.DELETE("/unsubscribe", requireJwtHandler(withLog(unsubscribe)))
+
+	// 全スケジュール取得
+	mux.GET("/allschedule", requireJwtHandler(withLog(allSchedules)))
+	// 全スクリプト取得
+	mux.GET("/scripts", requireJwtHandler(withLog(allScripts)))
 }
 
 // withLog sends log to logger before calling Handle

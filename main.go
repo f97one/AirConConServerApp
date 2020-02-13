@@ -60,11 +60,11 @@ type msgResp struct {
 }
 
 // コントロールスケジュールを返却するレスポンスのJSON(1要素分)
-//type scheduleResp struct {
-//	ScheduleId int `json:"schedule_id"`
-//	Name string `json:"name"`
-//	OnOff string `json:"on_off"`
-//	Weekday []int `json:"weekday"`
-//	Time time.Time `json:"time"`
-//	ScriptId int `json:"script_id"`
-//}
+type scheduleResp struct {
+	ScheduleId string `json:"schedule_id"`
+	Name       string `json:"name"`
+	OnOff      string `json:"on_off"`
+	Weekday    []int  `json:"weekday"`
+	Time       string `json:"time"`
+	ScriptId   string `json:"script_id"`
+}
