@@ -1,9 +1,14 @@
 package dataaccess
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"github.com/f97one/AirConCon/utils"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rubenv/sql-migrate"
+	"io"
+	"time"
 )
 
 var db *sqlx.DB
@@ -27,4 +32,14 @@ func initDatabase() {
 		panic(err)
 	}
 	db = database
+}
+
+func createKey() string {
+	hash := sha1.New()
+	_, err := io.WriteString(hash, time.Now().String())
+	if err != nil {
+		utils.GetLogger().Errorln(err)
+		return ""
+	}
+	return fmt.Sprintf("%x", hash)
 }
