@@ -52,8 +52,8 @@ type Timing struct {
 
 // scripts の構造体
 type Scripts struct {
-	ScriptId   string  `db:"script_id"`
-	Gpio       int     `db:"gpio"`
-	ScriptName string  `db:"script_name"`
-	Freq       float64 `db:"freq"`
+	ScriptId   string  `db:"script_id" json:"script_id"`
+	Gpio       int     `db:"gpio" json:"gpio"`
+	ScriptName string  `db:"script_name" json:"script_name"`
+	Freq       float64 `db:"freq" json:"freq"`
 }
