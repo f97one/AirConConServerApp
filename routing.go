@@ -23,8 +23,11 @@ func configureRouting(mux *httprouter.Router) {
 
 	// 全スケジュール取得
 	mux.GET("/allschedule", requireJwtHandler(withLog(allSchedules)))
+
 	// 全スクリプト取得
 	mux.GET("/scripts", requireJwtHandler(withLog(allScripts)))
+	// スクリプト追加
+	mux.PUT("/scripts/add", requireJwtHandler(withLog(addScript)))
 }
 
 // withLog sends log to logger before calling Handle
