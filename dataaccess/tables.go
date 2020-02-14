@@ -54,6 +54,6 @@ type Timing struct {
 type Scripts struct {
 	ScriptId   string  `db:"script_id" json:"script_id"`
 	Gpio       int     `db:"gpio" json:"gpio"`
-	ScriptName string  `db:"script_name" json:"script_name"`
+	ScriptName string  `db:"script_name" json:"name"`
 	Freq       float64 `db:"freq" json:"freq"`
 }
