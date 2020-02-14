@@ -9,7 +9,7 @@ import (
 func GetScript(scriptId string) (*Scripts, error) {
 	sqlStmt := "select script_id, gpio, script_name, freq from scripts where script_id = $1"
 
-	var s *Scripts
+	s := &Scripts{}
 	err := db.QueryRowx(sqlStmt, scriptId).StructScan(s)
 	if err != nil && err != sql.ErrNoRows {
 		utils.GetLogger().Errorln(err)
@@ -21,7 +21,7 @@ func GetScript(scriptId string) (*Scripts, error) {
 func GetScriptByName(scriptName string) (*Scripts, error) {
 	sqlStmt := "select script_id, gpio, script_name, freq from scripts where script_name = $1"
 
-	var s *Scripts
+	s := &Scripts{}
 	err := db.QueryRowx(sqlStmt, scriptName).StructScan(s)
 	if err != nil && err != sql.ErrNoRows {
 		utils.GetLogger().Errorln(err)
@@ -30,18 +30,18 @@ func GetScriptByName(scriptName string) (*Scripts, error) {
 	return s, err
 }
 
-func (s *Scripts) Save() error {
+func (s *Scripts) Save() (*Scripts, error) {
 	logger := utils.GetLogger()
 
 	// 衝突するレコードがないか調べる
 	sc, err := GetScriptByName(s.ScriptName)
 	if err != nil && err != sql.ErrNoRows {
 		logger.Errorln(err)
-		return err
+		return nil, err
 	}
-	if sc != nil {
+	if len(sc.ScriptId) > 0 {
 		err = errors.New("same script name found, abort")
-		return err
+		return nil, err
 	}
 
 	sqlStmt := "update scripts set gpio = :gpio, script_name = :scriptId, freq = :freq where script_id = :scriptId"
@@ -61,7 +61,7 @@ func (s *Scripts) Save() error {
 	if err != nil {
 		logger.Errorln(err)
 	}
-	return err
+	return s, err
 }
 
 func GetAllScripts() ([]Scripts, error) {
@@ -78,13 +78,13 @@ func GetAllScripts() ([]Scripts, error) {
 		return nil, err
 	}
 	for rows.Next() {
-		var s Scripts
+		s := &Scripts{}
 		err = rows.StructScan(s)
 		if err != nil {
 			logger.Errorln(err)
 			return nil, err
 		}
-		ret = append(ret, s)
+		ret = append(ret, *s)
 	}
 	return ret, nil
 }
