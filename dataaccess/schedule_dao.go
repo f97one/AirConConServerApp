@@ -20,13 +20,13 @@ func GetAllSchedule() ([]Schedule, error) {
 	}
 	if rows != nil {
 		for rows.Next() {
-			var s Schedule
+			s := &Schedule{}
 			err = rows.StructScan(s)
 			if err != nil {
 				logger.Errorln(err)
 				return nil, err
 			}
-			ret = append(ret, s)
+			ret = append(ret, *s)
 		}
 	}
 
@@ -41,13 +41,13 @@ func GetAllSchedule() ([]Schedule, error) {
 			}
 			if rows != nil {
 				for rows.Next() {
-					var t Timing
+					t := &Timing{}
 					err = rows.StructScan(t)
 					if err != nil {
 						logger.Errorln(err)
 						return nil, err
 					}
-					timingResult = append(timingResult, t)
+					timingResult = append(timingResult, *t)
 				}
 				val.ExecDay = timingResult
 			}
