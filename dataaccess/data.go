@@ -41,5 +41,5 @@ func createKey() string {
 		utils.GetLogger().Errorln(err)
 		return ""
 	}
-	return fmt.Sprintf("%x", hash)
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
