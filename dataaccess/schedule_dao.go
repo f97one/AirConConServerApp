@@ -94,7 +94,7 @@ values (:scheduleId, :name, :onOff, :executeTime, :scriptId)
 	bindValues := map[string]interface{}{
 		"scheduleId":  s.ScheduleId,
 		"name":        s.Name,
-		"onOff":       utils.BoolToOnOff(s.OnOff),
+		"onOff":       s.OnOff,
 		"executeTime": s.ExecuteTime,
 		"scriptId":    s.ScriptId,
 	}
