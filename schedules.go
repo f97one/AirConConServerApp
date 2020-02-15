@@ -20,7 +20,7 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
-	sch := make([]scheduleResp, len(schedules))
+	var sch []scheduleResp
 	for _, val := range schedules {
 
 		wd := make([]int, 7)
@@ -49,6 +49,7 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -102,6 +103,7 @@ func addSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -149,6 +151,7 @@ func getSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

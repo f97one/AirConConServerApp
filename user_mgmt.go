@@ -39,6 +39,7 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			respondError(&w, err, http.StatusInternalServerError)
 			return
 		}
+		w.Header().Add("Content-Type", "application/json")
 		_, err = w.Write(b)
 		if err != nil {
 			logger.Errorln(err)
@@ -104,6 +105,7 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			logger.Traceln("レスポンス作成中")
 			b, err := json.Marshal(usernameResp{Username: reqUser.Username})
 			w.WriteHeader(http.StatusCreated)
+			w.Header().Add("Content-Type", "application/json")
 			_, err = w.Write(b)
 			if err != nil {
 				logger.Errorln(err)
@@ -126,6 +128,7 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			respondError(&w, err, http.StatusInternalServerError)
 			return
 		}
+		w.Header().Add("Content-Type", "application/json")
 		_, err = w.Write(b)
 		if err != nil {
 			logger.Errorln(err)

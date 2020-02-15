@@ -26,6 +26,7 @@ func allScripts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if len(scripts) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 	}
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -63,6 +64,7 @@ func addScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

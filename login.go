@@ -95,6 +95,7 @@ func respondJwtToken(w http.ResponseWriter, au dataaccess.AppUser) (string, time
 		respondError(&w, err, http.StatusInternalServerError)
 		return "", time.Now()
 	}
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -113,6 +114,7 @@ func respondUnauthorized(w http.ResponseWriter) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
