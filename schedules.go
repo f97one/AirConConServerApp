@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/f97one/AirConCon/dataaccess"
 	"github.com/f97one/AirConCon/utils"
@@ -101,6 +102,53 @@ func addSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	_, err = w.Write(b)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+// 指定スケジュールを取得する。
+func getSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scheduleId := ps.ByName("scheduleId")
+	if len(scheduleId) == 0 {
+		logger.Errorln("スケジュール番号を渡されなかった")
+		respondError(&w, nil, http.StatusBadRequest)
+	}
+
+	sch, err := dataaccess.GetSchedule(scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		} else {
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+	}
+	var weekdays []int
+	for _, v := range sch.ExecDay {
+		weekdays = append(weekdays, int(v.WeekdayId))
+	}
+
+	ret := scheduleResp{
+		ScheduleId: sch.ScheduleId,
+		Name:       sch.Name,
+		OnOff:      utils.BoolToOnOff(sch.OnOff),
+		Weekday:    weekdays,
+		Time:       sch.ExecuteTime,
+		ScriptId:   sch.ScriptId,
+	}
+
+	b, err := json.Marshal(ret)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

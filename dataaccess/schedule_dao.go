@@ -125,3 +125,37 @@ values (:scheduleId, :name, :onOff, :executeTime, :scriptId)
 	}
 	return nil
 }
+
+func GetSchedule(scheduleId string) (*Schedule, error) {
+	logger := utils.GetLogger()
+	schStmt := "select schedule_id, name, on_off, execute_time, script_id from schedule where schedule_id = $1"
+	var s Schedule
+	err := db.QueryRowx(schStmt, scheduleId).StructScan(&s)
+	if err != nil {
+		logger.Errorln(err)
+		return nil, err
+	}
+
+	timingStmt := "select schedule_id, weekday_id from timing where schedule_id = $1"
+	rows, err := db.Queryx(timingStmt, scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var timings []Timing
+	for rows.Next() {
+		var t Timing
+		err = rows.StructScan(&t)
+		if err != nil {
+			logger.Errorln(err)
+			return nil, err
+		}
+		timings = append(timings, t)
+	}
+
+	s.ExecDay = timings
+
+	return &s, nil
+}
