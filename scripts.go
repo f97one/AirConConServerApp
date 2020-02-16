@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/f97one/AirConCon/dataaccess"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
@@ -100,6 +101,99 @@ func getScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(b)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+// 指定番号のスクリプトを更新する。
+func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scriptId := ps.ByName("scriptId")
+	if len(scriptId) == 0 {
+		logger.Errorln("スクリプト番号が渡されなかった")
+		respondError(&w, nil, http.StatusBadRequest)
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	sc := dataaccess.Scripts{}
+	err = json.Unmarshal(body, &sc)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	// 要求データのスクリプト名をもつデータがないかを確認
+	existingSc1, err := dataaccess.GetScriptByName(sc.ScriptName)
+	if err == nil {
+		if existingSc1.ScriptId != scriptId {
+			msg := msgResp{Msg: fmt.Sprintf("given script name %s already exists.", sc.ScriptName)}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Add(contentType, appJson)
+			_, err = w.Write(b)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+			}
+			return
+		}
+	} else if err != sql.ErrNoRows {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	existingSc, err := dataaccess.GetScript(scriptId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			msg := msgResp{Msg: fmt.Sprintf("given script id %s doesn't exist.", scriptId)}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			w.Header().Add(contentType, appJson)
+			_, err = w.Write(b)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+		}
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	existingSc.ScriptName = sc.ScriptName
+	existingSc.Freq = sc.Freq
+	existingSc.Gpio = sc.Gpio
+	newSc, err := existingSc.Save()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	b, err := json.Marshal(newSc)
+	w.Header().Add(contentType, appJson)
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

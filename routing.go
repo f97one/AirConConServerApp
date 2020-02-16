@@ -34,6 +34,8 @@ func configureRouting(mux *httprouter.Router) {
 	mux.PUT("/scripts/add", requireJwtHandler(withLog(addScript)))
 	// 指定スクリプト取得
 	mux.GET("/scripts/:scriptId", requireJwtHandler(withLog(getScript)))
+	// 指定スクリプト更新
+	mux.POST("/scripts/edit/:scriptId", requireJwtHandler(withLog(updateScript)))
 }
 
 // withLog sends log to logger before calling Handle
