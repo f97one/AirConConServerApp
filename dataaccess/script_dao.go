@@ -76,3 +76,16 @@ func GetAllScripts() ([]Scripts, error) {
 	}
 	return ret, nil
 }
+
+func DeleteScript(scriptId string) error {
+	_, err := GetScript(scriptId)
+	if err != nil {
+		return err
+	}
+	stmt := "delete from scripts where script_id = $1"
+	_, err = db.Exec(stmt, scriptId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -201,3 +201,41 @@ func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 }
+
+// 指定番号のスクリプトを削除する。
+func removeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scriptId := ps.ByName("scriptId")
+	if len(scriptId) == 0 {
+		logger.Errorln("スクリプト番号が渡されなかった")
+		respondError(&w, nil, http.StatusBadRequest)
+		return
+	}
+
+	err := dataaccess.DeleteScript(scriptId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			msg := msgResp{Msg: fmt.Sprintf("script id %s not found.", scriptId)}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			w.Header().Add(contentType, appJson)
+			_, err = w.Write(b)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+			}
+		} else {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// NO_CONTENT を返す
+	w.WriteHeader(http.StatusNoContent)
+
+}
