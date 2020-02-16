@@ -14,7 +14,11 @@ import (
 var conf *utils.AppConfig
 var logger *logrus.Logger
 
-const currentUser = "current_user_token"
+const (
+	currentUser string = "current_user_token"
+	contentType string = "Content-Type"
+	appJson     string = "application/json"
+)
 
 func init() {
 	gob.Register(dataaccess.AppUser{})
