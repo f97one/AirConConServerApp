@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/f97one/AirConCon/dataaccess"
 	"github.com/julienschmidt/httprouter"
@@ -64,6 +65,40 @@ func addScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(b)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+// 番号指定でスクリプトを取得する。
+func getScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scriptId := ps.ByName("scriptId")
+	if len(scriptId) == 0 {
+		logger.Errorln("スクリプト番号を渡されなかった")
+		respondError(&w, nil, http.StatusBadRequest)
+		return
+	}
+
+	script, err := dataaccess.GetScript(scriptId)
+	if err != nil {
+		logger.Errorln(err)
+		if err == sql.ErrNoRows {
+			respondError(&w, err, http.StatusNotFound)
+		} else {
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+	b, err := json.Marshal(script)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
