@@ -23,7 +23,7 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	var sch []scheduleResp
 	for _, val := range schedules {
 
-		wd := make([]int, 7)
+		var wd []int
 		for _, v := range val.ExecDay {
 			wd = append(wd, int(v.WeekdayId))
 		}
