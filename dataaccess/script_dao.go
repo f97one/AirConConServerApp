@@ -2,7 +2,6 @@ package dataaccess
 
 import (
 	"database/sql"
-	"errors"
 	"github.com/f97one/AirConCon/utils"
 )
 
@@ -33,18 +32,7 @@ func GetScriptByName(scriptName string) (*Scripts, error) {
 func (s *Scripts) Save() (*Scripts, error) {
 	logger := utils.GetLogger()
 
-	// 衝突するレコードがないか調べる
-	sc, err := GetScriptByName(s.ScriptName)
-	if err != nil && err != sql.ErrNoRows {
-		logger.Errorln(err)
-		return nil, err
-	}
-	if len(sc.ScriptId) > 0 {
-		err = errors.New("same script name found, abort")
-		return nil, err
-	}
-
-	sqlStmt := "update scripts set gpio = :gpio, script_name = :scriptId, freq = :freq where script_id = :scriptId"
+	sqlStmt := "update scripts set gpio = :gpio, script_name = :scriptName, freq = :freq where script_id = :scriptId"
 	if len(s.ScriptId) == 0 {
 		sqlStmt = "insert into scripts (script_id, gpio, script_name, freq) values (:scriptId, :gpio, :scriptName, :freq)"
 		s.ScriptId = createKey()
@@ -57,7 +45,7 @@ func (s *Scripts) Save() (*Scripts, error) {
 		"freq":       s.Freq,
 	}
 
-	_, err = db.NamedExec(sqlStmt, bindValues)
+	_, err := db.NamedExec(sqlStmt, bindValues)
 	if err != nil {
 		logger.Errorln(err)
 	}
