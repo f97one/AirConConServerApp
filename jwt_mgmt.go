@@ -69,12 +69,46 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		token, err := extractJwt(w, r)
 		if err != nil {
+			switch err.(type) {
+			case *jwt.ValidationError:
+				vErr := err.(*jwt.ValidationError)
+				logger.Errorln(vErr.Inner)
+
+				msg := msgResp{Msg: vErr.Inner.Error()}
+				b, errMarshal := json.Marshal(msg)
+				if errMarshal != nil {
+					logger.Errorln(errMarshal)
+					respondError(&w, errMarshal, http.StatusInternalServerError)
+					return
+				}
+
+				switch vErr.Errors {
+				case jwt.ValidationErrorExpired:
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Header().Add(contentType, appJson)
+					_, wErr := w.Write(b)
+					if wErr != nil {
+						logger.Errorln(wErr)
+						respondError(&w, wErr, http.StatusInternalServerError)
+					}
+					return
+				case jwt.ValidationErrorSignatureInvalid:
+					w.WriteHeader(http.StatusForbidden)
+					w.Header().Add(contentType, appJson)
+					_, wErr := w.Write(b)
+					if wErr != nil {
+						logger.Errorln(wErr)
+						respondError(&w, wErr, http.StatusInternalServerError)
+					}
+					return
+				}
+			}
 			return
 		}
 		if token.Valid {
 			logger.Traceln("トークンに問題なし")
 
-			// 有効期限切れかどうかを確認する
+			// claimのユーザーが存在するか否かを確認する
 			verifyKey, err := extractPublicKey(w)
 			if err != nil {
 				logger.Errorln(err)
@@ -86,29 +120,7 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 			_, err = jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (interface{}, error) {
 				return verifyKey, nil
 			})
-			// claimsに格納したUnixタイムスタンプがなぜかfloat64扱いになっているのでキャストで対応
-			exp := claims["exp"].(float64)
-			expiresAt := time.Unix(int64(exp), 0)
-			if expiresAt.Before(time.Now()) {
-				msg := "Given token has expired."
-				logger.Errorln(msg)
-				w.WriteHeader(http.StatusUnauthorized)
-				b, err := json.Marshal(&msgResp{Msg: msg})
-				if err != nil {
-					logger.Errorln(err)
-					respondError(&w, err, http.StatusBadRequest)
-					return
-				}
-				_, err = w.Write(b)
-				if err != nil {
-					logger.Errorln(err)
-					respondError(&w, err, http.StatusBadRequest)
-					return
-				}
-				return
-			}
 
-			// claimのユーザーが存在するか否かを確認する
 			username := claims["name"].(string)
 			_, err = dataaccess.LoadByUsername(username)
 			if err != nil {
