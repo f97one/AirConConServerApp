@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/f97one/AirConCon/dataaccess"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
@@ -106,6 +107,29 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 				}
 				return
 			}
+
+			// claimのユーザーが存在するか否かを確認する
+			username := claims["name"].(string)
+			_, err = dataaccess.LoadByUsername(username)
+			if err != nil {
+				logger.Errorln(err)
+				msg := msgResp{Msg: fmt.Sprintf("user %s not found", username)}
+				b, err := json.Marshal(msg)
+				if err != nil {
+					logger.Errorln(err)
+					respondError(&w, err, http.StatusInternalServerError)
+					return
+				}
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, err = w.Write(b)
+				if err != nil {
+					logger.Errorln(err)
+					respondError(&w, err, http.StatusInternalServerError)
+					return
+				}
+			}
+			logger.Tracef("user %s accessed within the expiration date.", username)
 
 			handle(w, r, ps)
 		} else {
