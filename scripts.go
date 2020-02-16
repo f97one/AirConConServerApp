@@ -28,7 +28,8 @@ func allScripts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if len(scripts) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(contentType, appJson)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -65,8 +66,8 @@ func addScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add(contentType, appJson)
 	w.WriteHeader(http.StatusCreated)
-	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -100,7 +101,8 @@ func getScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(contentType, appJson)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -144,8 +146,8 @@ func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 				respondError(&w, err, http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusConflict)
 			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusConflict)
 			_, err = w.Write(b)
 			if err != nil {
 				logger.Errorln(err)
@@ -169,8 +171,8 @@ func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 				respondError(&w, err, http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusNotFound)
 			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusNotFound)
 			_, err = w.Write(b)
 			if err != nil {
 				logger.Errorln(err)
@@ -194,6 +196,7 @@ func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 	b, err := json.Marshal(newSc)
 	w.Header().Add(contentType, appJson)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -221,8 +224,8 @@ func removeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 				respondError(&w, err, http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusNotFound)
 			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusNotFound)
 			_, err = w.Write(b)
 			if err != nil {
 				logger.Errorln(err)

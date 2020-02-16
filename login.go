@@ -79,6 +79,7 @@ func login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // JWTトークンを返送する。
 func respondJwtToken(w http.ResponseWriter, au dataaccess.AppUser) (string, time.Time) {
+	w.Header().Add(contentType, appJson)
 	w.WriteHeader(http.StatusOK)
 	jwtToken, expirationDate := genJwtToken(w, au.Username)
 
@@ -95,7 +96,6 @@ func respondJwtToken(w http.ResponseWriter, au dataaccess.AppUser) (string, time
 		respondError(&w, err, http.StatusInternalServerError)
 		return "", time.Now()
 	}
-	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -107,6 +107,7 @@ func respondJwtToken(w http.ResponseWriter, au dataaccess.AppUser) (string, time
 
 // ユーザーまたはパスワードが違う場合のレスポンスを作る
 func respondUnauthorized(w http.ResponseWriter) {
+	w.Header().Add(contentType, appJson)
 	w.WriteHeader(http.StatusUnauthorized)
 	b, err := json.Marshal(&msgResp{Msg: "Invalid username or password"})
 	if err != nil {
@@ -114,7 +115,6 @@ func respondUnauthorized(w http.ResponseWriter) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

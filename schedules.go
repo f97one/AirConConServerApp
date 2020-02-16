@@ -39,8 +39,11 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		sch = append(sch, s)
 	}
 
+	w.Header().Add(contentType, appJson)
 	if len(sch) == 0 {
 		w.WriteHeader(http.StatusNotFound)
+	} else {
+		w.WriteHeader(http.StatusOK)
 	}
 
 	b, err := json.Marshal(sch)
@@ -49,7 +52,6 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -102,8 +104,8 @@ func addSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add(contentType, appJson)
 	w.WriteHeader(http.StatusCreated)
-	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)
@@ -151,7 +153,8 @@ func getSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(contentType, appJson)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(b)
 	if err != nil {
 		logger.Errorln(err)

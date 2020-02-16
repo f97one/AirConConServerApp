@@ -31,6 +31,7 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if !appUser.AdminFlag {
 		// 管理者フラグなしはユーザー追加要求を拒否
 		logger.Warnln("カレントユーザーに管理者権限なし")
+		w.Header().Add(contentType, appJson)
 		w.WriteHeader(http.StatusUnauthorized)
 		msg := "Current user has no privilege to add other user."
 		b, err := json.Marshal(&msgResp{Msg: msg})
@@ -39,7 +40,6 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			respondError(&w, err, http.StatusInternalServerError)
 			return
 		}
-		w.Header().Add("Content-Type", "application/json")
 		_, err = w.Write(b)
 		if err != nil {
 			logger.Errorln(err)
@@ -104,8 +104,8 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			// CREATEDでレスポンスjsonを返す
 			logger.Traceln("レスポンス作成中")
 			b, err := json.Marshal(usernameResp{Username: reqUser.Username})
+			w.Header().Add(contentType, appJson)
 			w.WriteHeader(http.StatusCreated)
-			w.Header().Add("Content-Type", "application/json")
 			_, err = w.Write(b)
 			if err != nil {
 				logger.Errorln(err)
@@ -121,6 +121,7 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		logger.Warnf("ユーザー %s は既に追加されている", au.Username)
 		msg := fmt.Sprintf("User %s already exists.", au.Username)
 		logger.Traceln("レスポンス作成中")
+		w.Header().Add(contentType, appJson)
 		w.WriteHeader(http.StatusConflict)
 		b, err := json.Marshal(&msgResp{Msg: msg})
 		if err != nil {
@@ -128,7 +129,6 @@ func subscribe(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			respondError(&w, err, http.StatusInternalServerError)
 			return
 		}
-		w.Header().Add("Content-Type", "application/json")
 		_, err = w.Write(b)
 		if err != nil {
 			logger.Errorln(err)

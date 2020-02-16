@@ -84,8 +84,8 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 
 				switch vErr.Errors {
 				case jwt.ValidationErrorExpired:
-					w.WriteHeader(http.StatusUnauthorized)
 					w.Header().Add(contentType, appJson)
+					w.WriteHeader(http.StatusUnauthorized)
 					_, wErr := w.Write(b)
 					if wErr != nil {
 						logger.Errorln(wErr)
@@ -93,8 +93,8 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 					}
 					return
 				case jwt.ValidationErrorSignatureInvalid:
-					w.WriteHeader(http.StatusForbidden)
 					w.Header().Add(contentType, appJson)
+					w.WriteHeader(http.StatusForbidden)
 					_, wErr := w.Write(b)
 					if wErr != nil {
 						logger.Errorln(wErr)
@@ -132,7 +132,7 @@ func requireJwtHandler(handle httprouter.Handle) httprouter.Handle {
 					respondError(&w, err, http.StatusInternalServerError)
 					return
 				}
-				w.Header().Add("Content-Type", "application/json")
+				w.Header().Add(contentType, appJson)
 				w.WriteHeader(http.StatusUnauthorized)
 				_, err = w.Write(b)
 				if err != nil {
