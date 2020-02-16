@@ -1,7 +1,6 @@
 package dataaccess
 
 import (
-	"database/sql"
 	"github.com/f97one/AirConCon/utils"
 )
 
@@ -10,48 +9,45 @@ func GetAllSchedule() ([]Schedule, error) {
 
 	schStmt := "select schedule_id, name, on_off, execute_time, script_id from schedule"
 	var ret []Schedule
-	rows, err := db.Queryx(schStmt)
-	if rows != nil {
-		defer rows.Close()
+	schRows, err := db.Queryx(schStmt)
+	if schRows != nil {
+		defer schRows.Close()
 	}
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		logger.Errorln(err)
 		return nil, err
 	}
-	if rows != nil {
-		for rows.Next() {
-			s := &Schedule{}
-			err = rows.StructScan(s)
-			if err != nil {
-				logger.Errorln(err)
-				return nil, err
-			}
-			ret = append(ret, *s)
+	for schRows.Next() {
+		s := &Schedule{}
+		err = schRows.StructScan(s)
+		if err != nil {
+			logger.Errorln(err)
+			return nil, err
 		}
+		ret = append(ret, *s)
 	}
 
 	timingStmt := "select schedule_id, weekday_id from timing where schedule_id = $1"
 	if ret != nil {
-		for _, val := range ret {
-			timingResult := make([]Timing, 7)
-			rows, err = db.Queryx(timingStmt, val.ScheduleId)
+		for idx, schVal := range ret {
+			var timingResult []Timing
+			timingRows, err := db.Queryx(timingStmt, schVal.ScheduleId)
 			if err != nil {
 				logger.Errorln(err)
 				return nil, err
 			}
-			if rows != nil {
-				for rows.Next() {
-					t := &Timing{}
-					err = rows.StructScan(t)
-					if err != nil {
-						logger.Errorln(err)
-						return nil, err
-					}
-					timingResult = append(timingResult, *t)
+
+			for timingRows.Next() {
+				var t Timing
+				err = timingRows.StructScan(&t)
+				if err != nil {
+					logger.Errorln(err)
+					return nil, err
 				}
-				val.ExecDay = timingResult
+				timingResult = append(timingResult, t)
 			}
-			_ = rows.Close()
+			ret[idx].ExecDay = timingResult
+			_ = timingRows.Close()
 		}
 	}
 
