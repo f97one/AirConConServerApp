@@ -22,10 +22,16 @@ func BoolToOnOff(b bool) string {
 
 // 引数が on のとき true を、そうでないとき false を返す。
 func OnOffToBool(onOff string) bool {
-	return onOff == "on"
+	if onOff == "on" {
+		return true
+	}
+	return false
 }
 
 // 引数が 1 のとき true を、そうでないとき false を返す。
 func IntToBool(i int) bool {
-	return i == 1
+	if i == 1 {
+		return true
+	}
+	return false
 }

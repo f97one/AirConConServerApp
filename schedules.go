@@ -162,3 +162,95 @@ func getSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 }
+
+// スケジュールを更新する。
+func updateSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scheduleId := ps.ByName("scheduleId")
+	if len(scheduleId) == 0 {
+		logger.Errorln("スケジュール番号を渡されなかった")
+		respondError(&w, nil, http.StatusBadRequest)
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	schReq := &scheduleResp{}
+	err = json.Unmarshal(body, schReq)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	var weekdayTiming []dataaccess.Timing
+	for _, weekday := range schReq.Weekday {
+		weekdayTiming = append(weekdayTiming, dataaccess.Timing{
+			ScheduleId: schReq.ScheduleId,
+			WeekdayId:  time.Weekday(weekday),
+		})
+	}
+
+	sch, err := dataaccess.GetSchedule(scheduleId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.Errorln(err)
+			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusNotFound)
+			msg := msgResp{Msg: err.Error()}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+			_, err = w.Write(b)
+			if err != nil {
+				logger.Errorln(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+		}
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	sch.ExecDay = weekdayTiming
+	sch.ExecuteTime = schReq.Time
+	sch.OnOff = utils.OnOffToBool(schReq.OnOff)
+	sch.Name = schReq.Name
+	sch.ScriptId = schReq.ScriptId
+
+	err = sch.Save()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	schResp := scheduleResp{
+		ScheduleId: sch.ScriptId,
+		Name:       sch.Name,
+		OnOff:      utils.BoolToOnOff(sch.OnOff),
+		Weekday:    schReq.Weekday,
+		Time:       sch.ExecuteTime,
+		ScriptId:   sch.ScriptId,
+	}
+	b, err := json.Marshal(schResp)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add(contentType, appJson)
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(b)
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusInternalServerError)
+	}
+}
