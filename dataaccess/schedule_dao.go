@@ -155,3 +155,50 @@ func GetSchedule(scheduleId string) (*Schedule, error) {
 
 	return &s, nil
 }
+
+func DeleteSchedule(scheduleId string) error {
+	logger := utils.GetLogger()
+	_, err := GetSchedule(scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+
+	timingStmt := "delete from timing where schedule_id = $1"
+	_, err = tx.Exec(timingStmt, scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		err = tx.Rollback()
+		if err != nil {
+			logger.Errorln(err)
+		}
+		return err
+	}
+
+	schStmt := "delete from schedule where schedule_id = $1"
+	_, err = tx.Exec(schStmt, scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		err = tx.Rollback()
+		if err != nil {
+			logger.Errorln(err)
+		}
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorln(err)
+		err = tx.Rollback()
+		if err != nil {
+			logger.Errorln(err)
+		}
+		return err
+	}
+	return nil
+}

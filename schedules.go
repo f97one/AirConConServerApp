@@ -254,3 +254,52 @@ func updateSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		respondError(&w, err, http.StatusInternalServerError)
 	}
 }
+
+// 指定スケジュールを削除する。
+func removeSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scheduleId := ps.ByName("scheduleId")
+	if len(scheduleId) == 0 {
+		m := "schedule id must not be empty"
+		logger.Errorln(m)
+		msg := msgResp{Msg: m}
+		b, err := json.Marshal(msg)
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Add(contentType, appJson)
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	err := dataaccess.DeleteSchedule(scheduleId)
+	if err != nil {
+		logger.Errorln(err)
+		msg := msgResp{Msg: err.Error()}
+		b, e := json.Marshal(msg)
+		if e != nil {
+			logger.Errorln(e)
+			respondError(&w, e, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Add(contentType, appJson)
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		_, err := w.Write(b)
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

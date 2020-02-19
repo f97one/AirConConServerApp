@@ -17,7 +17,7 @@ var logger *logrus.Logger
 const (
 	currentUser string = "current_user_token"
 	contentType string = "Content-Type"
-	appJson     string = "application/json"
+	appJson     string = "application/json; charset=UTF-8"
 )
 
 func init() {
