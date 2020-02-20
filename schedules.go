@@ -122,6 +122,11 @@ func getSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, nil, http.StatusBadRequest)
 	}
 
+	if scheduleId == "next" {
+		nextSchedule(w, r, ps)
+		return
+	}
+
 	sch, err := dataaccess.GetSchedule(scheduleId)
 	if err != nil {
 		logger.Errorln(err)
@@ -302,4 +307,53 @@ func removeSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		}
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// 次回スケジュールを返す。
+func nextSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Add(contentType, appJson)
+
+	next, err := dataaccess.GetNextSchedule()
+	if err != nil {
+		logger.Errorln(err)
+		sc := http.StatusInternalServerError
+		if err == sql.ErrNoRows {
+			sc = http.StatusNotFound
+		}
+		w.WriteHeader(sc)
+		b, err := json.Marshal(msgResp{Msg: err.Error()})
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	nextResp := nextScheduleResp{
+		ScheduleId: next.ScheduleId,
+		Name:       next.Name,
+		OnOff:      utils.BoolToOnOff(next.OnOff),
+		WeekdayId:  next.WeekdayId,
+		Time:       next.ExecuteTime,
+		ScriptId:   next.ScriptId,
+	}
+
+	b, err := json.Marshal(nextResp)
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(b)
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+	}
 }

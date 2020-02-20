@@ -72,3 +72,13 @@ type scheduleResp struct {
 	Time       string `json:"time"`
 	ScriptId   string `json:"script_id"`
 }
+
+// 次回のコントロールスケジュールを返却するレスポンスのJSON
+type nextScheduleResp struct {
+	ScheduleId string `json:"schedule_id"`
+	Name       string `json:"name"`
+	OnOff      string `json:"on_off"`
+	WeekdayId  int    `json:"weekday_id"`
+	Time       string `json:"time"`
+	ScriptId   string `json:"script_id"`
+}

@@ -52,8 +52,28 @@ type Timing struct {
 
 // scripts の構造体
 type Scripts struct {
-	ScriptId   string  `db:"script_id" json:"script_id"`
-	Gpio       int     `db:"gpio" json:"gpio"`
-	ScriptName string  `db:"script_name" json:"name"`
-	Freq       float64 `db:"freq" json:"freq"`
+	// スクリプト番号
+	ScriptId string `db:"script_id" json:"script_id"`
+	// GPIOピン番号
+	Gpio int `db:"gpio" json:"gpio"`
+	// スクリプト名
+	ScriptName string `db:"script_name" json:"name"`
+	// サンプリング周波数
+	Freq float64 `db:"freq" json:"freq"`
+}
+
+// 次回スケジュール返送用構造体
+type NextSchedule struct {
+	// スケジュール番号
+	ScheduleId string `db:"schedule_id"`
+	// スケジュール名
+	Name string `db:"name"`
+	// オンオフ種別
+	OnOff bool `db:"on_off"`
+	// 実行時間
+	ExecuteTime string `db:"execute_time"`
+	// 実行スクリプト番号
+	ScriptId string `db:"script_id"`
+	// 実行日
+	WeekdayId int `db:"weekday_id"`
 }

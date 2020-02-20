@@ -1,7 +1,10 @@
 package dataaccess
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/f97one/AirConCon/utils"
+	"time"
 )
 
 func GetAllSchedule() ([]Schedule, error) {
@@ -201,4 +204,45 @@ func DeleteSchedule(scheduleId string) error {
 		return err
 	}
 	return nil
+}
+
+// 次回スケジュールを取得する。
+func GetNextSchedule() (*NextSchedule, error) {
+	logger := utils.GetLogger()
+
+	currentTime := time.Now().Format("15:04")
+	dayOfWeek := time.Now().Weekday()
+
+	bindValues := map[string]interface{}{
+		"currentTime": currentTime,
+		"dayOfWeek":   int(dayOfWeek),
+	}
+
+	sqlFmt := `select sc.schedule_id, sc.name, sc.on_off, sc.execute_time, sc.script_id, tm.weekday_id from schedule sc
+inner join timing tm on sc.schedule_id = tm.schedule_id
+where sc.execute_time %s :currentTime
+and tm.weekday_id %s :dayOfWeek
+order by sc.execute_time, tm.weekday_id
+limit 1`
+	sql1 := fmt.Sprintf(sqlFmt, ">", ">=")
+	sql2 := fmt.Sprintf(sqlFmt, ">=", ">")
+	rows, err := db.NamedQuery(sql1, bindValues)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.Warnln(err)
+			rows, err = db.NamedQuery(sql2, bindValues)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+	ret := &NextSchedule{}
+	_ = rows.Next()
+	err = rows.StructScan(ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
