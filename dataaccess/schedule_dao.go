@@ -2,7 +2,6 @@ package dataaccess
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/f97one/AirConCon/utils"
 	"time"
 )
@@ -213,36 +212,57 @@ func GetNextSchedule() (*NextSchedule, error) {
 	currentTime := time.Now().Format("15:04")
 	dayOfWeek := time.Now().Weekday()
 
-	bindValues := map[string]interface{}{
-		"currentTime": currentTime,
-		"dayOfWeek":   int(dayOfWeek),
-	}
-
-	sqlFmt := `select sc.schedule_id, sc.name, sc.on_off, sc.execute_time, sc.script_id, tm.weekday_id from schedule sc
+	sql1 := `select sc.schedule_id, sc.name, sc.on_off, sc.execute_time, sc.script_id, tm.weekday_id from schedule sc
 inner join timing tm on sc.schedule_id = tm.schedule_id
-where sc.execute_time %s :currentTime
-and tm.weekday_id %s :dayOfWeek
-order by sc.execute_time, tm.weekday_id
-limit 1`
-	sql1 := fmt.Sprintf(sqlFmt, ">", ">=")
-	sql2 := fmt.Sprintf(sqlFmt, ">=", ">")
-	rows, err := db.NamedQuery(sql1, bindValues)
+where weekday_id >= $1
+order by tm.weekday_id, sc.execute_time`
+	rows1, err := db.Queryx(sql1, int(dayOfWeek))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			logger.Warnln(err)
-			rows, err = db.NamedQuery(sql2, bindValues)
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		logger.Warnln(err)
+		if err != sql.ErrNoRows {
 			return nil, err
 		}
 	}
-	ret := &NextSchedule{}
-	_ = rows.Next()
-	err = rows.StructScan(ret)
+
+	defer rows1.Close()
+	if err == nil {
+		logger.Tracef("weekday_id >= %d でレコードを発見", int(dayOfWeek))
+
+		for rows1.Next() {
+			var ns NextSchedule
+			err = rows1.StructScan(&ns)
+			if err != nil {
+				logger.Errorln(err)
+				return nil, err
+			}
+			if ns.WeekdayId <= int(dayOfWeek) && ns.ExecuteTime < currentTime {
+				logger.Traceln("レコードをスキップ", ns)
+				continue
+			} else {
+				logger.Traceln("条件に見合うレコードを発見", ns)
+				return &ns, nil
+			}
+		}
+	}
+
+	// 先頭レコードを検索しなおす
+	logger.Warnln("先頭レコードを検索")
+	sql2 := `select sc.schedule_id, sc.name, sc.on_off, sc.execute_time, sc.script_id, tm.weekday_id from schedule sc
+inner join timing tm on sc.schedule_id = tm.schedule_id
+order by tm.weekday_id, sc.execute_time limit 1`
+	rows2, err := db.Queryx(sql2)
 	if err != nil {
+		logger.Errorln(err)
 		return nil, err
 	}
-	return ret, nil
+	defer rows2.Close()
+
+	rows2.Next()
+	var ns NextSchedule
+	err = rows2.StructScan(&ns)
+	if err != nil {
+		logger.Errorln(err)
+		return nil, err
+	}
+	return &ns, nil
 }

@@ -331,8 +331,8 @@ func nextSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		if err != nil {
 			logger.Error(err)
 			respondError(&w, err, http.StatusInternalServerError)
-			return
 		}
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
