@@ -39,18 +39,24 @@ func allSchedules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		sch = append(sch, s)
 	}
 
-	w.Header().Add(contentType, appJson)
-	if len(sch) == 0 {
-		w.WriteHeader(http.StatusNotFound)
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
-
 	b, err := json.Marshal(sch)
 	if err != nil {
 		logger.Errorln(err)
 		respondError(&w, err, http.StatusInternalServerError)
 		return
+	}
+
+	w.Header().Add(contentType, appJson)
+	if len(sch) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		b, err = json.Marshal(msgResp{Msg: "Schedule not found."})
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+	} else {
+		w.WriteHeader(http.StatusOK)
 	}
 	_, err = w.Write(b)
 	if err != nil {
