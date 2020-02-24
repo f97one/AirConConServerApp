@@ -477,7 +477,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	cmd := exec.Command("at", "-M", "-f", "airconcon_cmd.sh", "-t", runAt)
 	cmdline := cmd.String()
 	logger.Tracef("登録される cmdline : %s", cmdline)
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := msgResp{Msg: err.Error()}
 		b, err := json.Marshal(msg)
@@ -497,7 +497,32 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 	// ジョブIDを取り出す
 	logger.Tracef("実行後のStdin : %s", out)
-	retLine := strings.Split(fmt.Sprintf("%s", out), " ")
+	lines := strings.Split(string(out), "\n")
+	var retLine []string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "job ") {
+			logger.Tracef("at(1)の出力 : %s", line)
+			retLine = strings.Split(line, " ")
+			break
+		}
+	}
+	if len(retLine) == 0 {
+		msg := msgResp{Msg: "cmd execution seems to fail."}
+		b, err := json.Marshal(msg)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Add(contentType, appJson)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
 	jobId, err := strconv.Atoi(retLine[1])
 	if err != nil {
 		logger.Error(err)
