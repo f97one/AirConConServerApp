@@ -30,3 +30,7 @@ airconcon.sqlite-wal
 
 # JWT署名キー
 airconcon_jwt_rsa*
+
+# コマンド実行ファイル
+airconcon_cmd.sh
+AirConCon
