@@ -2,7 +2,9 @@ package dataaccess
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/f97one/AirConCon/utils"
+	"strings"
 )
 
 func (js *JobSchedule) Save() error {
@@ -56,4 +58,56 @@ func GetCondition(scheduleId string) (*JobSchedule, error) {
 		return nil, err
 	}
 	return &js, nil
+}
+
+func GetRegisteredNext(jobIds []string) ([]JobSchedule, error) {
+	logger := utils.GetLogger()
+
+	embeddedJobIds := strings.Join(jobIds, ",")
+	stmt := fmt.Sprintf("select schedule_id, job_id, cmd_line, run_at from job_schedule where job_id in (%s)", embeddedJobIds)
+
+	rows, err := db.Queryx(stmt)
+	if err != nil {
+		logger.Errorln(err)
+		return nil, err
+	}
+
+	var js []JobSchedule
+	for rows.Next() {
+		var j JobSchedule
+		err = rows.StructScan(&j)
+		if err != nil {
+			_ = rows.Close()
+			return nil, err
+		}
+
+		js = append(js, j)
+	}
+
+	return js, nil
+}
+
+func RemoveNext(jobIds []string) error {
+	logger := utils.GetLogger()
+
+	embeddedJobIds := strings.Join(jobIds, ",")
+	stmt := fmt.Sprintf("delete from job_schedule where job_id in (%s)", embeddedJobIds)
+
+	tx, err := db.Beginx()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	_, err = tx.Exec(stmt)
+	if err != nil {
+		logger.Errorln(err)
+		_ = tx.Rollback()
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorln(err)
+		return err
+	}
+	return nil
 }

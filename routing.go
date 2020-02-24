@@ -45,6 +45,8 @@ func configureRouting(mux *httprouter.Router) {
 
 	// 次回スケジュール登録
 	mux.POST("/schedule/register/next", withLog(registerNext))
+	// 次回スケジュール登録のキャンセル
+	mux.DELETE("/schedule/cancel/next", requireJwtHandler(withLog(cancelNext)))
 }
 
 // withLog sends log to logger before calling Handle

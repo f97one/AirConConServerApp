@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	queueId string = "n"
+	queueId             string = "n"
+	scriptExecutionFile string = "airconcon_cmd.sh"
 )
 
 // 保存中のすべてのスケジュールを返す。
@@ -377,21 +378,7 @@ func nextSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 // 次回予定をシステムに登録する。
 func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if !(runtime.GOOS == "linux" || runtime.GOOS == "freebsd") {
-		body := fmt.Sprintf("This endpoint does not work on this platform (%s).", runtime.GOOS)
-		b, err := json.Marshal(msgResp{Msg: body})
-		if err != nil {
-			logger.Error(err)
-			respondError(&w, err, http.StatusInternalServerError)
-			return
-		}
-		w.Header().Add(contentType, appJson)
-		w.WriteHeader(http.StatusNotImplemented)
-		_, err = w.Write(b)
-		if err != nil {
-			logger.Error(err)
-			respondError(&w, err, http.StatusInternalServerError)
-		}
+	if checkPlatform(w) {
 		return
 	}
 	logger.Tracef("%s で実行", runtime.GOOS)
@@ -482,7 +469,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	// at の登録
-	cmd := exec.Command("at", "-M", "-f", "airconcon_cmd.sh", "-t", runAt)
+	cmd := exec.Command("at", "-M", "-f", scriptExecutionFile, "-t", runAt, "-q", queueId)
 	cmdline := cmd.String()
 	logger.Tracef("登録される cmdline : %s", cmdline)
 	out, err := cmd.CombinedOutput()
@@ -551,4 +538,125 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+}
+
+func checkPlatform(w http.ResponseWriter) bool {
+	if !(runtime.GOOS == "linux" || runtime.GOOS == "freebsd") {
+		body := fmt.Sprintf("This endpoint does not work on this platform (%s).", runtime.GOOS)
+		b, err := json.Marshal(msgResp{Msg: body})
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return true
+		}
+		w.Header().Add(contentType, appJson)
+		w.WriteHeader(http.StatusNotImplemented)
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return true
+	}
+	return false
+}
+
+// 次回予定をキャンセルする。
+func cancelNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	if checkPlatform(w) {
+		return
+	}
+	logger.Tracef("%s で実行", runtime.GOOS)
+
+	atq := exec.Command("at", "-l", "-q", queueId)
+	logger.Tracef("実行する cmdline : %s", atq.String())
+
+	out, err := atq.CombinedOutput()
+	if err != nil {
+		msg := msgResp{Msg: err.Error()}
+		b, err := json.Marshal(msg)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Add(contentType, appJson)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Error(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+	logger.Tracef("実行結果 : %s", out)
+
+	lines := strings.Split(string(out), "\n")
+
+	var jobIds []string
+	for _, line := range lines {
+		// 先頭８文字だけ切り取る
+		logger.Tracef("行データ : %s", line)
+		idx := strings.Index(line, "\t")
+		logger.Tracef("index : %d", idx)
+		if idx == -1 {
+			continue
+		}
+		jobNo := line[:idx]
+		jobIds = append(jobIds, jobNo)
+	}
+
+	jsSlice, err := dataaccess.GetRegisteredNext(jobIds)
+	if err != nil {
+		logger.Error(err)
+		if err == sql.ErrNoRows {
+			msg := msgResp{Msg: err.Error()}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				logger.Error(err)
+				respondError(&w, err, http.StatusInternalServerError)
+				return
+			}
+			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusNotFound)
+			_, err = w.Write(b)
+			if err != nil {
+				logger.Error(err)
+				respondError(&w, err, http.StatusInternalServerError)
+			}
+			return
+		}
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	var ids string
+	var removeJobId []string
+	for jIdx, js := range jsSlice {
+		removeJobId = append(removeJobId, strconv.Itoa(js.JobId))
+		if jIdx == 0 {
+			ids = fmt.Sprintf("%d", js.JobId)
+		} else {
+			ids = fmt.Sprintf("%s %d ", ids, js.JobId)
+		}
+	}
+
+	atrm := exec.Command("at", "-r", ids)
+	logger.Tracef("実行する cmdline : %s", atrm.String())
+	out, err = atrm.CombinedOutput()
+	logger.Tracef("実行結果 : %s", out)
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	// ジョブスケジュールの消込
+	err = dataaccess.RemoveNext(removeJobId)
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
