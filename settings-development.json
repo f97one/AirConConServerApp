@@ -1,5 +1,6 @@
 {
   "production_mode": false,
   "listen_addr": "0.0.0.0",
-  "listen_port": 8080
+  "listen_port": 8080,
+  "signal_db_file": "signal_codes.db"
 }

@@ -10,6 +10,7 @@ type AppConfig struct {
 	ProductionMode bool   `json:"production_mode"`
 	ListenAddr     string `json:"listen_addr"`
 	ListenPort     int    `json:"listen_port"`
+	SignalDbFile   string `json:"signal_db_file"`
 }
 
 var conf *AppConfig
@@ -21,6 +22,7 @@ func Load(path string) *AppConfig {
 				ProductionMode: false,
 				ListenAddr:     "0.0.0.0",
 				ListenPort:     8080,
+				SignalDbFile:   "signal_codes.db",
 			}
 		} else {
 			file, err := ioutil.ReadFile(path)
