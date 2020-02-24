@@ -377,7 +377,7 @@ func nextSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 // 次回予定をシステムに登録する。
 func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if runtime.GOOS != "linux" || runtime.GOOS != "freebsd" {
+	if !(runtime.GOOS == "linux" || runtime.GOOS == "freebsd") {
 		body := fmt.Sprintf("This endpoint does not work on this platform (%s).", runtime.GOOS)
 		b, err := json.Marshal(msgResp{Msg: body})
 		if err != nil {
@@ -391,9 +391,10 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		if err != nil {
 			logger.Error(err)
 			respondError(&w, err, http.StatusInternalServerError)
-			return
 		}
+		return
 	}
+	logger.Tracef("%s で実行", runtime.GOOS)
 
 	// 次回分の実行情報を得る
 	next, err := dataaccess.GetNextSchedule()
@@ -465,7 +466,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
-	err = cmdTmpl.ExecuteTemplate(file, "cmdtmpl/playback.txt", bindValues)
+	err = cmdTmpl.ExecuteTemplate(file, "playback.txt", bindValues)
 	if err != nil {
 		logger.Error(err)
 		respondError(&w, err, http.StatusInternalServerError)
@@ -495,6 +496,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 	// ジョブIDを取り出す
+	logger.Tracef("実行後のStdin : %s", out)
 	retLine := strings.Split(fmt.Sprintf("%s", out), " ")
 	jobId, err := strconv.Atoi(retLine[1])
 	if err != nil {
