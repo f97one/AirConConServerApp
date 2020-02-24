@@ -419,7 +419,14 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	logger.Traceln(next)
+
 	script, err := dataaccess.GetScript(next.ScriptId)
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
 	currentTime := time.Now()
 	deltas := next.WeekdayId - int(currentTime.Weekday())
 	if deltas < 0 {
@@ -451,6 +458,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		"SignalDbFile": conf.SignalDbFile,
 		"ScriptName":   script.ScriptName,
 	}
+	logger.Traceln(bindValues)
 
 	cmdTmpl, err := template.ParseFiles("cmdtmpl/playback.txt")
 	if err != nil {
@@ -466,7 +474,7 @@ func registerNext(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
-	err = cmdTmpl.ExecuteTemplate(file, "playback.txt", bindValues)
+	err = cmdTmpl.Execute(file, bindValues)
 	if err != nil {
 		logger.Error(err)
 		respondError(&w, err, http.StatusInternalServerError)
