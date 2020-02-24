@@ -13,9 +13,9 @@ func (js *JobSchedule) Save() error {
 		return err
 	}
 
-	stmt := "update job_schedule set job_id = :jobId, cmd_line = :cmdLine, run_at = :runAt where schedule_id = :schedule_id"
+	stmt := "update job_schedule set job_id = :jobId, cmd_line = :cmdLine, run_at = :runAt where schedule_id = :scheduleId"
 	if err != nil {
-		stmt = "insert into job_schedule (schedule_id, job_id, cmd_line, run_at) values (:scheduleId, jobId, :cmdLine, :runAt)"
+		stmt = "insert into job_schedule (schedule_id, job_id, cmd_line, run_at) values (:scheduleId, :jobId, :cmdLine, :runAt)"
 	}
 
 	tx, err := db.Beginx()
@@ -49,7 +49,7 @@ func (js *JobSchedule) Save() error {
 }
 
 func GetCondition(scheduleId string) (*JobSchedule, error) {
-	stmt := "select schedule_id, job_id, cmd_line, run_at from next_schedule where schedule_id = $1"
+	stmt := "select schedule_id, job_id, cmd_line, run_at from job_schedule where schedule_id = $1"
 	var js JobSchedule
 	err := db.QueryRowx(stmt, scheduleId).StructScan(&js)
 	if err != nil {
