@@ -77,3 +77,15 @@ type NextSchedule struct {
 	// 実行日
 	WeekdayId int `db:"weekday_id"`
 }
+
+// job_schedule の構造体
+type JobSchedule struct {
+	// 登録したスケジュールID
+	ScheduleId string `db:"schedule_id"`
+	// ジョブID
+	JobId int `db:"job_id"`
+	// 実行コマンドライン
+	CmdLine string `db:"cmd_line"`
+	// 実行予定日時
+	RunAt string `db:"run_at"`
+}
