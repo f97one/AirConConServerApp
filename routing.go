@@ -42,6 +42,9 @@ func configureRouting(mux *httprouter.Router) {
 	mux.POST("/scripts/edit/:scriptId", requireJwtHandler(withLog(updateScript)))
 	// 指定スクリプト削除
 	mux.DELETE("/scripts/drop/:scriptId", requireJwtHandler(withLog(removeScript)))
+
+	// 次回スケジュール登録
+	mux.POST("/schedule/register/next", withLog(registerNext))
 }
 
 // withLog sends log to logger before calling Handle
