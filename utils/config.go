@@ -11,6 +11,8 @@ type AppConfig struct {
 	ListenAddr     string `json:"listen_addr"`
 	ListenPort     int    `json:"listen_port"`
 	SignalDbFile   string `json:"signal_db_file"`
+	PythonCmd      string `json:"python_cmd"`
+	IrrpPyPath     string `json:"irrp_py_path"`
 }
 
 var conf *AppConfig
@@ -23,6 +25,8 @@ func Load(path string) *AppConfig {
 				ListenAddr:     "0.0.0.0",
 				ListenPort:     8080,
 				SignalDbFile:   "signal_codes.db",
+				PythonCmd:      "python3",
+				IrrpPyPath:     "irrp.py",
 			}
 		} else {
 			file, err := ioutil.ReadFile(path)
