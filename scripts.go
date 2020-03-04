@@ -8,6 +8,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 )
 
 // すべてのスクリプトを返す。
@@ -241,4 +242,53 @@ func removeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	// NO_CONTENT を返す
 	w.WriteHeader(http.StatusNoContent)
 
+}
+
+// 指定スクリプトを即時実行する。
+func executeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	scriptid := ps.ByName("scriptId")
+	if len(scriptid) == 0 {
+		msg := msgResp{Msg:"scriptId must not be empty"}
+		b, err := json.Marshal(msg)
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Add(contentType, appJson)
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = w.Write(b)
+		if err != nil {
+			logger.Errorln(err)
+			respondError(&w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	script, err := dataaccess.GetScript(scriptid)
+	if err != nil {
+		logger.Errorln(err)
+		if err == sql.ErrNoRows {
+			msg := msgResp{Msg:err.Error()}
+			b, _ := json.Marshal(msg)
+			w.Header().Add(contentType, appJson)
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(b)
+			return
+		}
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+
+	cmd := exec.Command(conf.PythonCmd, conf.IrrpPyPath,
+		"-p", fmt.Sprintf("-g%d", script.Gpio), "--freq", fmt.Sprintf("%v", script.Freq),
+		"-f", conf.SignalDbFile, script.ScriptName)
+	logger.Tracef("実行する cmdline : %s", cmd.String())
+	err = cmd.Start()
+	if err != nil {
+		logger.Error(err)
+		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
 }
