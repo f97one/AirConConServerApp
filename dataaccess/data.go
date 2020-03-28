@@ -20,7 +20,7 @@ func init() {
 }
 
 func initDatabase() {
-	database, err := sqlx.Open(dialect, "file:airconcon.sqlite?_mode=rw&_journal=WAL&_auto_vacuu=incremental")
+	database, err := sqlx.Open(dialect, "file:airconcon.sqlite?_mode=rw&_journal=WAL&_auto_vacuum=incremental")
 	if err != nil {
 		panic(err)
 	}
