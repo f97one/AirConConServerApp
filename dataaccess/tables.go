@@ -1,6 +1,10 @@
 package dataaccess
 
-import "time"
+import (
+	"errors"
+	"regexp"
+	"time"
+)
 
 // app_user の構造体
 type AppUser struct {
@@ -88,4 +92,34 @@ type JobSchedule struct {
 	CmdLine string `db:"cmd_line"`
 	// 実行予定日時
 	RunAt string `db:"run_at"`
+}
+
+func (au *AppUser) Validate(checkUsername bool) error {
+	alphaNumeric := regexp.MustCompile("^[0-9a-z]+$")
+	bCryptPrefix := regexp.MustCompile("^\\$2[aby]\\$")
+
+	// username
+	if checkUsername {
+		if au.Username == "" {
+			return errors.New("username must not be empty")
+		}
+		if len(au.Username) > 32 {
+			return errors.New("username must be less than or equals to 32 characters")
+		}
+		if !alphaNumeric.MatchString(au.Username) {
+			return errors.New("username must contain alphabet or numeric")
+		}
+	}
+
+	// password
+	if !bCryptPrefix.MatchString(au.Password) {
+		if au.Password == "" {
+			return errors.New("password must not be empty")
+		}
+		if len(au.Password) > 32 {
+			return errors.New("password must be less than or equals to 32 characters")
+		}
+	}
+
+	return nil
 }
