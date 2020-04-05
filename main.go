@@ -31,6 +31,7 @@ func main() {
 	logger = utils.GetLogger()
 
 	logger.Traceln("config :", conf)
+	dataaccess.InitDatabase()
 
 	mux := httprouter.New()
 
