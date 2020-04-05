@@ -92,6 +92,13 @@ func addSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	// scheduleRespのバリデータでエラーを400で返す
+	err = schResp.validate()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
+		return
+	}
 	var weekdayTiming []dataaccess.Timing
 	for _, weekday := range schResp.Weekday {
 		weekdayTiming = append(weekdayTiming, dataaccess.Timing{
@@ -207,6 +214,13 @@ func updateSchedule(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	if err != nil {
 		logger.Errorln(err)
 		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	// scheduleRespのバリデータでエラーを400で返す
+	err = schReq.validate()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
 		return
 	}
 	var weekdayTiming []dataaccess.Timing
