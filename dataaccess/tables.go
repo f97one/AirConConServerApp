@@ -2,6 +2,7 @@ package dataaccess
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 )
@@ -94,14 +95,27 @@ type JobSchedule struct {
 	RunAt string `db:"run_at"`
 }
 
-func (au *AppUser) Validate(checkUsername bool) error {
+func (au *AppUser) Validate(checkUsername bool, forceUserMinLength bool, forcePasswdMinLength bool) error {
 	alphaNumeric := regexp.MustCompile("^[0-9a-z]+$")
 	bCryptPrefix := regexp.MustCompile("^\\$2[aby]\\$")
 
+	userMinLen := 0
+	if forceUserMinLength {
+		userMinLen = 5
+	}
+	passwdMinLen := 0
+	if forcePasswdMinLength {
+		passwdMinLen = 7
+	}
+
 	// username
 	if checkUsername {
-		if au.Username == "" {
-			return errors.New("username must not be empty")
+		if len(au.Username) <= userMinLen {
+			txt := "username must not be empty"
+			if userMinLen != 0 {
+				txt = fmt.Sprintf("username must be greater than %d characters", userMinLen)
+			}
+			return errors.New(txt)
 		}
 		if len(au.Username) > 32 {
 			return errors.New("username must be less than or equals to 32 characters")
@@ -113,8 +127,12 @@ func (au *AppUser) Validate(checkUsername bool) error {
 
 	// password
 	if !bCryptPrefix.MatchString(au.Password) {
-		if au.Password == "" {
-			return errors.New("password must not be empty")
+		if len(au.Password) <= passwdMinLen {
+			txt := "password must not be empty"
+			if passwdMinLen != 0 {
+				txt = fmt.Sprintf("password must be greater than %d characters", passwdMinLen)
+			}
+			return errors.New(txt)
 		}
 		if len(au.Password) > 32 {
 			return errors.New("password must be less than or equals to 32 characters")
