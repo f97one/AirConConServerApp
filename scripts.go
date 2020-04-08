@@ -54,6 +54,12 @@ func addScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		respondError(&w, err, http.StatusInternalServerError)
 		return
 	}
+	err = sc.Validate()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
+		return
+	}
 	s, err := sc.Save()
 	if err != nil {
 		logger.Errorln(err)
@@ -133,6 +139,12 @@ func updateScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	if err != nil {
 		logger.Errorln(err)
 		respondError(&w, err, http.StatusInternalServerError)
+		return
+	}
+	err = sc.Validate()
+	if err != nil {
+		logger.Errorln(err)
+		respondError(&w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -248,7 +260,7 @@ func removeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 func executeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	scriptid := ps.ByName("scriptId")
 	if len(scriptid) == 0 {
-		msg := msgResp{Msg:"scriptId must not be empty"}
+		msg := msgResp{Msg: "scriptId must not be empty"}
 		b, err := json.Marshal(msg)
 		if err != nil {
 			logger.Errorln(err)
@@ -269,7 +281,7 @@ func executeScript(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	if err != nil {
 		logger.Errorln(err)
 		if err == sql.ErrNoRows {
-			msg := msgResp{Msg:err.Error()}
+			msg := msgResp{Msg: err.Error()}
 			b, _ := json.Marshal(msg)
 			w.Header().Add(contentType, appJson)
 			w.WriteHeader(http.StatusNotFound)
