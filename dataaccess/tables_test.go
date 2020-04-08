@@ -96,6 +96,9 @@ func TestValidateScripts(t *testing.T) {
 	assert.Nil(t, err)
 	s.Freq = 38
 	err = s.Validate()
-	assert.EqualError(t, err, "Freq must be either 36, 40, or 56")
+	assert.Nil(t, err)
+	s.Freq = 37
+	err = s.Validate()
+	assert.EqualError(t, err, "Freq must be either 36, 38, 40, or 56")
 
 }

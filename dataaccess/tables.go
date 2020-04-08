@@ -10,6 +10,7 @@ import (
 
 const (
 	Freq36kHz float64 = 36
+	Freq38kHz float64 = 38
 	Freq40kHz float64 = 40
 	Freq56kHz float64 = 56
 )
@@ -169,8 +170,8 @@ func (s *Scripts) Validate() error {
 	}
 
 	// Freq
-	if !(s.Freq == Freq36kHz || s.Freq == Freq40kHz || s.Freq == Freq56kHz) {
-		return errors.New("Freq must be either 36, 40, or 56")
+	if !(s.Freq == Freq36kHz || s.Freq == Freq38kHz || s.Freq == Freq40kHz || s.Freq == Freq56kHz) {
+		return errors.New("Freq must be either 36, 38, 40, or 56")
 	}
 	return nil
 }
