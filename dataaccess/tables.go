@@ -4,7 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
+)
+
+const (
+	Freq36kHz float64 = 36
+	Freq40kHz float64 = 40
+	Freq56kHz float64 = 56
 )
 
 // app_user の構造体
@@ -139,5 +146,31 @@ func (au *AppUser) Validate(checkUsername bool, forceUserMinLength bool, forcePa
 		}
 	}
 
+	return nil
+}
+
+func (s *Scripts) Validate() error {
+	// GPIO
+	// 1～40
+	if s.Gpio < 1 || s.Gpio > 40 {
+		return errors.New("gpio must be between 1 to 40")
+	}
+
+	// ScriptName
+	alphaNumericUnder := regexp.MustCompile("^[0-9a-zA-Z_]+$")
+	if len(s.ScriptName) > 32 {
+		return errors.New("ScriptName must be less than or equals to 32 characters")
+	}
+	if len(strings.TrimSpace(s.ScriptName)) == 0 {
+		return errors.New("ScriptName must not be empty")
+	}
+	if !alphaNumericUnder.MatchString(s.ScriptName) {
+		return errors.New("ScriptName must contain alphabet or number or underscore only")
+	}
+
+	// Freq
+	if !(s.Freq == Freq36kHz || s.Freq == Freq40kHz || s.Freq == Freq56kHz) {
+		return errors.New("Freq must be either 36, 40, or 56")
+	}
 	return nil
 }
